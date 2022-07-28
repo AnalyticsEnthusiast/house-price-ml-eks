@@ -5,7 +5,10 @@
 
 <p>This project involves the operationalization of a House price prediction API. The model uses a sklearn model 
 that has been trained to predict housing prices in Boston according to several features, such as average rooms in a home and data about highway access, teacher-to-pupil ratios etc. 
-The application has been designed to run in a kubernetes environment to take advantage of auto scaling and improve uptime, stability and availability of the application. Elastic kubernetes service on AWS was selected as the ideal platform on which to run to reduce the costs and admin overhead associated with a self hosted Kubernetes cluster. This project adheres to the key principles of DevOps with a fully automated code delivery pipeline along with monitoring/alerting in place to ensure downtime is minimised. Prometheius was selected as the montoring tool of choice as this can easily fit into a containerized environment on EKS. CI builds will be run within Jenkins workers running as containers within EKS. </p>
+The application has been designed to run in a kubernetes environment to take advantage of auto scaling and improve uptime, stability and availability of the application. Elastic kubernetes service on AWS was selected as the ideal platform on which to run to reduce the costs and admin overhead associated with a self hosted Kubernetes cluster.</p>
+
+![High Level Architecture](./images/HousePriceML_EKS.png)
+
 
 <br>
 
