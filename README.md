@@ -1,40 +1,15 @@
-[![AnalyticsEnthusiast](https://circleci.com/gh/AnalyticsEnthusiast/house-price-ml-microservice-kubernetes.svg?style=svg)](https://circleci.com/gh/AnalyticsEnthusiast/house-price-ml-microservice-kubernetes)
+## House price prediction microservice deployed to EKS on AWS
 
 
-## Project Summary
+### Introduction
 
-
-<p>This project involves the operationalization of a House price prediction API developed by our Data science team. The model uses a sklearn model 
+<p>This project involves the operationalization of a House price prediction API. The model uses a sklearn model 
 that has been trained to predict housing prices in Boston according to several features, such as average rooms in a home and data about highway access, teacher-to-pupil ratios etc. 
-The application has been designed to run in a kubernetes environment to take advantage of auto scaling and improve uptime and stability of the application.</p>
+The application has been designed to run in a kubernetes environment to take advantage of auto scaling and improve uptime, stability and availability of the application. Elastic kubernetes service on AWS was selected as the ideal platform on which to run to reduce the costs and admin overhead associated with a self hosted Kubernetes cluster. This project adheres to the key principles of DevOps with a fully automated code delivery pipeline along with monitoring/alerting in place to ensure downtime is minimised. Prometheius was selected as the montoring tool of choice as this can easily fit into a containerized environment on EKS. CI builds will be run within Jenkins workers running as containers within EKS. </p>
 
 <br>
 
-## How to run
-
-
-To run the application directly, you can run app.py file like so. The API should be exposed on port 80 by default.
-
-```
-> python3 app.py
-```
-
-The application has been bundled into a docker image which can be downloaded from dockerhub (https://hub.docker.com/repository/docker/theanalyst6/house-prediction-ml).
-
-```
-> docker pull theanalyst6/house-prediction-ml:v1.0
-```
-
-You can then run the container like so, exposing the container on port 8001 on the host.
-
-```
-> docker run -d --rm -p 8001:80 --name house-pred-1 theanalyst6/house-prediction-ml:v1.0
-```
-
-<br>
-
-## Project files
-
+### Project files
 
 
 | Filename            | Description                                           | 
@@ -49,3 +24,14 @@ You can then run the container like so, exposing the container on port 8001 on t
 | run_docker.sh       | Script for running and pushing new image to dockerhub |
 | run_kubernetes.sh   | Script for running in kubernetes environment          |
 | upload_docker.sh    | Script for pushing image to dockerhub                 |
+
+<br>
+
+### Documentation and design
+
+1. [Architecture](./docs/architecture.md)
+
+2. [CI/CD Pipeline using Jenkins](./docs/jenkins.md)
+
+3. [Monitoring and alerting using Prometheus](./docs/prometheus.md)
+
