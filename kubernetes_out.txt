@@ -1,0 +1,14 @@
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/house-pred-1   1/1     1            1           3m26s
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/house-pred-1-75fdd4845f   1         1         1       3m26s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   26h
+
+NAME                                READY   STATUS    RESTARTS   AGE
+pod/house-pred-1-75fdd4845f-phwgs   1/1     Running   0          3m26s
+Forwarding from 0.0.0.0:8001 -> 80
+Handling connection for 8001
+
