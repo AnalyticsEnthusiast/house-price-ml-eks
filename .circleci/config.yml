@@ -2,7 +2,7 @@ version: 2.1
 
 executors:
   docker-executor:
-    environment:
+        environment:
           IMAGE_NAME: theanalyst6/house-prediction-ml
         docker:
               - image: circleci/buildpack-deps:stretch
@@ -104,11 +104,11 @@ workflow:
           jobs:
             - lint 
             - test
-            - build
+            - build:
                 requires:
                   - lint
                   - test
-            - push
+            - push:
                 requires:
                   - build
                 filters:
