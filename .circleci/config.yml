@@ -41,25 +41,23 @@ jobs:
                 - v1-dependencies-{{ checksum "requirements.txt" }}
                 - v1-dependencies-
         - run:
-            name: Start Flask application
+            name: Start Flask application and run test
             command: |
                 python3 -m venv venv
                 . venv/bin/activate
                 make install
                 python3 app.py &
+                ./make_prediction.sh 80
+                RC=$(echo $?)
+                if [ "${RC}" != "0" ];
+                then
+                    exit 1
+                fi
         - save_cache:
             paths:
                 - ./venv
             key: v1-dependencies-{{ checksum "requirements.txt" }}
-        - run:
-            name: Run sample request against API
-            command: |
-                  ./make_prediction.sh 80
-                  RC=$(echo $?)
-                  if [ "${RC}" != "0" ];
-                  then
-                      exit 1
-                  fi
+                  
 
     build:
       environment:
