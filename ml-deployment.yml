@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: house-pred-api-deployment
+  labels:
+    app: house-pred-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: house-pred-api
+  template:
+    metadata:
+      labels:
+        app: house-pred-api
+    spec:
+      containers:
+      - name: house-pred-api
+        image: theanalyst6/house-prediction-ml:latest
+        ports:
+        - containerPort: 80

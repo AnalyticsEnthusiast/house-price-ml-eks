@@ -61,8 +61,6 @@ jobs:
                   
 
     build:
-      environment:
-          IMAGE_NAME: theanalyst6/house-prediction-ml
       docker:
             - image: circleci/buildpack-deps:stretch
       steps:
@@ -71,18 +69,16 @@ jobs:
         - run:
             name: Build Docker image with latest tag
             command: |
-              docker build -t ${IMAGE_NAME}:latest .
+              docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
         - run:
             name: Archive Docker image
-            command: docker save -o image.tar ${IMAGE_NAME}
+            command: docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}
         - persist_to_workspace:
             root: .
             paths:
               - ./image.tar
   
     push:
-      environment:
-          IMAGE_NAME: theanalyst6/house-prediction-ml
       docker:
             - image: circleci/buildpack-deps:stretch
       steps:
@@ -96,7 +92,7 @@ jobs:
             name: Push to dockerhub
             command: |
               echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-              docker push ${IMAGE_NAME}:latest
+              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
 
 
 workflows:
