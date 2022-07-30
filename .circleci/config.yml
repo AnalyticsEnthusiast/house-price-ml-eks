@@ -114,4 +114,4 @@ workflows:
                     - build
                   filters:
                     branches:
-                      only: testing
+                      only: master
