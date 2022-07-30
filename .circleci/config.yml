@@ -1,11 +1,4 @@
-version: 2.1
-
-executors:
-  docker-executor:
-        environment:
-          IMAGE_NAME: theanalyst6/house-prediction-ml
-        docker:
-              - image: circleci/buildpack-deps:stretch
+version: 2
 
 jobs:
     lint:
@@ -67,7 +60,10 @@ jobs:
                   fi
 
     build:
-      executor: docker-executor
+      environment:
+          IMAGE_NAME: theanalyst6/house-prediction-ml
+      docker:
+            - image: circleci/buildpack-deps:stretch
       steps:
         - checkout
         - setup_remote_docker
@@ -84,7 +80,10 @@ jobs:
             - ./image.tar
   
     push:
-      executor: docker-executor
+      environment:
+          IMAGE_NAME: theanalyst6/house-prediction-ml
+      docker:
+            - image: circleci/buildpack-deps:stretch
       steps:
         - attach_workspace:
             at: /tmp/workspace
@@ -99,18 +98,18 @@ jobs:
               docker push ${IMAGE_NAME}:latest
 
 workflow:
-       version: 2
-        CI:
-          jobs:
-            - lint 
-            - test
-            - build:
-                requires:
-                  - lint
-                  - test
-            - push:
-                requires:
-                  - build
-                filters:
-                  branches:
-                    only: test
+      version: 2
+      CI:
+        jobs:
+          - lint 
+          - test
+          - build:
+              requires:
+                - lint
+                - test
+          - push:
+              requires:
+                - build
+              filters:
+                branches:
+                  only: test
