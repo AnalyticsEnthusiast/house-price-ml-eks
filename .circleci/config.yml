@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 jobs:
     lint:
@@ -97,7 +97,9 @@ jobs:
               echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
               docker push ${IMAGE_NAME}:latest
 
+
 workflows:
+      version: 2
       main_workflow:
             jobs:
               - lint 
