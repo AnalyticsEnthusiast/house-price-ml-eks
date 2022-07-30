@@ -54,7 +54,7 @@ jobs:
         - run:
             name: Run sample request against API
             command: |
-                  ./make_prediction.sh
+                  ./make_prediction.sh 80
                   RC=$(echo $?)
                   if [ "${RC}" != "0" ];
                   then
