@@ -43,7 +43,9 @@ jobs:
         - run:
             name: Start Flask application
             command: |
+                python3 -m venv venv
                 . venv/bin/activate
+                make install
                 python3 app.py
         - save_cache:
             paths:
