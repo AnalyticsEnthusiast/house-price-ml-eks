@@ -47,6 +47,7 @@ jobs:
                 . venv/bin/activate
                 make install
                 python3 app.py &
+                sleep 5 # Wait for server to start
                 ./make_prediction.sh 80
                 RC=$(echo $?)
                 if [ "${RC}" != "0" ];
