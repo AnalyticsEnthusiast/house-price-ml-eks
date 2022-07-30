@@ -1,11 +1,12 @@
-## House price prediction microservice deployed to EKS on AWS
+[![AnalyticsEnthusiast](https://circleci.com/gh/AnalyticsEnthusiast/house-price-ml-eks.svg?style=svg)](https://circleci.com/gh/AnalyticsEnthusiast/house-price-ml-eks)
+
+## Operationalizing a House price prediction microservice deployed on AWS
 
 
 ### Introduction
 
-<p>This project involves the operationalization of a House price prediction API. The model uses a sklearn model 
-that has been trained to predict housing prices in Boston according to several features, such as average rooms in a home and data about highway access, teacher-to-pupil ratios etc. 
-The application has been designed to run in a kubernetes environment to take advantage of auto scaling and improve uptime, stability and availability of the application. Elastic kubernetes service on AWS was selected as the ideal platform on which to run to reduce the costs and admin overhead associated with a self hosted Kubernetes cluster.</p>
+<p>This project involves the operationalization of a House price prediction API. It uses a sklearn model trained to predict housing prices in Boston according to several features, such as average rooms in a home and data about highway access, teacher-to-pupil ratios etc. 
+The application has been designed to run in a kubernetes environment to take advantage of auto scaling, improve uptime, stability and availability of the application. Elastic kubernetes service (EKS) on AWS was selected as the ideal platform on which to run, in order to reduce the costs and admin overhead associated with a self hosted Kubernetes cluster.</p>
 
 ![High Level Architecture](./images/HousePriceML_EKS.png)
 
@@ -34,7 +35,7 @@ The application has been designed to run in a kubernetes environment to take adv
 
 1. [Architecture](./docs/architecture.md)
 
-2. [CI/CD Pipeline using Jenkins](./docs/jenkins.md)
+2. [CI/CD Pipeline using CircleCI](./docs/circleci.md)
 
 3. [Monitoring and alerting using Prometheus](./docs/prometheus.md)
 
