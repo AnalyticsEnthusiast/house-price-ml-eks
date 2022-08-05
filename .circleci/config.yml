@@ -147,7 +147,9 @@ workflows:
       main_workflow:
             jobs:
               - create_deployment
-              - create_service
+              - create_service:
+                    requires:
+                        - create_deployment
               #- lint 
               #- test
               #- build:
