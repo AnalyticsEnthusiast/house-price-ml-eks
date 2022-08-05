@@ -99,46 +99,46 @@ jobs:
               docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
 
     create_deployment:
-      docker:
-        - image: 'cimg/python:3.10'
-      steps:
-        - checkout
-        - run:
-            name: Set up .aws directory
-            command: |
-              mkdir ~/.aws echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
-        - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: ${CLUSTER_NAME}
-          install-kubectl: true
-          aws-region: ${AWS_DEFAULT_REGION}
-          aws-profile: KubeUser
-        - kubernetes/create-or-update-resource:
-            action-type: apply
-            get-rollout-status: true
-            namespace: ${KUBE_NAMESPACE}
-            resource-file-path: ml-deployment.yml
-            resource-name: deployment/house-pred-deployment-${CIRCLE_WORKFLOW_ID:0:8}
+        docker:
+          - image: cimg/python:3.10.6
+        steps:
+          - checkout
+          - run:
+              name: Set up .aws directory
+              command: |
+                mkdir ~/.aws echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+          - aws-eks/update-kubeconfig-with-authenticator:
+                  cluster-name: ${CLUSTER_NAME}
+                  install-kubectl: true
+                  aws-region: ${AWS_DEFAULT_REGION}
+                  aws-profile: KubeUser
+          - kubernetes/create-or-update-resource:
+                  action-type: apply
+                  get-rollout-status: true
+                  namespace: ${KUBE_NAMESPACE}
+                  resource-file-path: ml-deployment.yml
+                  resource-name: deployment/house-pred-deployment-${CIRCLE_WORKFLOW_ID:0:8}
 
     create_service:
-      docker:
-        - image: 'cimg/python:3.10'
-      steps:
-        - checkout
-        - run:
-            name: Set up .aws directory
-            command: |
-              mkdir ~/.aws echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
-        - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: ${CLUSTER_NAME}
-          install-kubectl: true
-          aws-region: ${AWS_DEFAULT_REGION}
-          aws-profile: KubeUser
-        - kubernetes/create-or-update-resource:
-            action-type: apply
-            get-rollout-status: true
-            namespace: ${KUBE_NAMESPACE}
-            resource-file-path: ml-service.yml
-            resource-name: service/house-pred-api-service-${CIRCLE_WORKFLOW_ID:0:8} 
+        docker:
+          - image: cimg/python:3.10.6
+        steps:
+          - checkout
+          - run:
+              name: Set up .aws directory
+              command: |
+                mkdir ~/.aws echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+          - aws-eks/update-kubeconfig-with-authenticator:
+                  cluster-name: ${CLUSTER_NAME}
+                  install-kubectl: true
+                  aws-region: ${AWS_DEFAULT_REGION}
+                  aws-profile: KubeUser
+          - kubernetes/create-or-update-resource:
+                  action-type: apply
+                  get-rollout-status: true
+                  namespace: ${KUBE_NAMESPACE}
+                  resource-file-path: ml-service.yml
+                  resource-name: service/house-pred-api-service-${CIRCLE_WORKFLOW_ID:0:8} 
 
 workflows:
       version: 2
