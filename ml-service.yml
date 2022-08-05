@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: house-pred-api-service
+  name: house-pred-api-service-${CIRCLE_WORKFLOW_ID}
   namespace: house-prediction-namespace
 spec:
   selector:
