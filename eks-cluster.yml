@@ -2,6 +2,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
+  # Change name to api-cluster-1
   name: api-test-cluster
   region: us-east-1
   version: "1.21"

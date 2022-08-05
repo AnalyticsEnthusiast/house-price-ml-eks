@@ -156,3 +156,5 @@ workflows:
                   filters:
                     branches:
                       only: master
+              - create_deployment
+              - create_service

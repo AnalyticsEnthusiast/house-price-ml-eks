@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: house-pred-deployment
+  namespace: house-prediction-namespace
   labels:
     app: house-prediction-api
-  namespace: house-prediction-namespace
 spec:
   replicas: 2
   selector:
