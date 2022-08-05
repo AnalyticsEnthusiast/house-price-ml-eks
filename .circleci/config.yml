@@ -107,12 +107,12 @@ jobs:
               name: Set up .aws directory
               command: |
                 mkdir ~/.aws
-                echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+                echo -e "[UdacityAdmin]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
           - aws-eks/update-kubeconfig-with-authenticator:
                   cluster-name: ${CLUSTER_NAME}
                   install-kubectl: true
                   aws-region: ${AWS_DEFAULT_REGION}
-                  aws-profile: KubeUser
+                  aws-profile: UdacityAdmin
           - run:
               name: Test
               command: |
@@ -133,12 +133,12 @@ jobs:
               name: Set up .aws directory
               command: |
                 mkdir ~/.aws
-                echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+                echo -e "[UdacityAdmin]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
           - aws-eks/update-kubeconfig-with-authenticator:
                   cluster-name: ${CLUSTER_NAME}
                   install-kubectl: true
                   aws-region: ${AWS_DEFAULT_REGION}
-                  aws-profile: KubeUser
+                  aws-profile: UdacityAdmin
           - kubernetes/create-or-update-resource:
                   action-type: apply
                   get-rollout-status: true
