@@ -113,6 +113,10 @@ jobs:
                   install-kubectl: true
                   aws-region: ${AWS_DEFAULT_REGION}
                   aws-profile: KubeUser
+          - run:
+              name: Test
+              command: |
+                cat ~/.kube/config
           - kubernetes/create-or-update-resource:
                   action-type: apply
                   get-rollout-status: true
@@ -147,9 +151,9 @@ workflows:
       main_workflow:
             jobs:
               - create_deployment
-              - create_service:
-                    requires:
-                        - create_deployment
+              #- create_service:
+              #      requires:
+              #          - create_deployment
               #- lint 
               #- test
               #- build:
