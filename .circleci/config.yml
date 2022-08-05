@@ -156,5 +156,9 @@ workflows:
                   filters:
                     branches:
                       only: master
-              - create_deployment
-              - create_service
+              - create_deployment:
+                    requires:
+                      - push
+              - create_service:
+                    requires:
+                      - create_deployment
