@@ -106,7 +106,8 @@ jobs:
           - run:
               name: Set up .aws directory
               command: |
-                mkdir ~/.aws echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+                mkdir ~/.aws
+                echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
           - aws-eks/update-kubeconfig-with-authenticator:
                   cluster-name: ${CLUSTER_NAME}
                   install-kubectl: true
@@ -127,7 +128,8 @@ jobs:
           - run:
               name: Set up .aws directory
               command: |
-                mkdir ~/.aws echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+                mkdir ~/.aws
+                echo -e "[KubeUser]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
           - aws-eks/update-kubeconfig-with-authenticator:
                   cluster-name: ${CLUSTER_NAME}
                   install-kubectl: true
@@ -144,21 +146,23 @@ workflows:
       version: 2
       main_workflow:
             jobs:
-              - lint 
-              - test
-              - build:
-                  requires:
-                    - lint
-                    - test
-              - push:
-                  requires:
-                    - build
-                  filters:
-                    branches:
-                      only: master
-              - create_deployment:
-                    requires:
-                      - push
-              - create_service:
-                    requires:
-                      - create_deployment
+              - create_deployment
+              - create_service
+              #- lint 
+              #- test
+              #- build:
+              #    requires:
+              #      - lint
+              #      - test
+              #- push:
+              #    requires:
+              #      - build
+              #    filters:
+              #      branches:
+              #        only: master
+              #- create_deployment:
+              #      requires:
+              #        - push
+              #- create_service:
+              #      requires:
+              #        - create_deployment
