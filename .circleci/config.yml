@@ -119,6 +119,7 @@ jobs:
                 cat ~/.kube/config
           - kubernetes/create-or-update-resource:
                   action-type: apply
+                  envsubst: true
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-deployment.yml
@@ -141,6 +142,7 @@ jobs:
                   aws-profile: UdacityAdmin
           - kubernetes/create-or-update-resource:
                   action-type: apply
+                  envsubst: true
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-service.yml
@@ -151,7 +153,7 @@ workflows:
       main_workflow:
             jobs:
               - create_deployment
-              
+
               #- create_service:
               #      requires:
               #          - create_deployment
