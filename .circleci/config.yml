@@ -106,12 +106,13 @@ jobs:
         - run:
             name: Build Docker image with latest tag
             command: |
-              docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${LABEL_VERSION} .
+              LABEL_VERSION=$(cat ./label_version.txt)
+              docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION} .
         - run:
             name: Archive Docker image
             command: |
               LABEL_VERSION=$(cat ./label_version.txt)
-              docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${LABEL_VERSION}
+              docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION}
         - persist_to_workspace:
             root: .
             paths:
