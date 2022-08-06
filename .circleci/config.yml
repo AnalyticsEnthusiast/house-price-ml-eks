@@ -91,6 +91,10 @@ jobs:
         - checkout
         - setup_remote_docker
         - run:
+            name: Install Basic Calculator
+            command: |
+              sudo apt install -y bc
+        - run:
             name: Get latest label version
             command: |
               echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
