@@ -1,5 +1,24 @@
 version: 2.1
 
+commands:
+    rollback_on_fail:
+        parameters:
+          script_type:
+            type: string
+        steps:
+          - run:
+              name: Rollback kubernetes deployment/service on failure
+              command: |
+                echo "Rolling back " << parameters.script_type >>
+                RESULT=$(kubectl get deployments | grep "house-pred-deployment-${CIRCLE_WORKFLOW_ID}")
+                if [ "${RESULT}" = "0" ];
+                then
+                    envsubst < ml-<<parameters.script_type>>.yml | kubectl delete -f -
+                else
+                    echo "Deployment not found" && exit 0
+                fi
+              when: on_fail
+
 orbs:
   aws-eks: circleci/aws-eks@2.2.0
   kubernetes: circleci/kubernetes@1.3
@@ -63,7 +82,6 @@ jobs:
                 - ./venv
             key: v1-dependencies-{{ checksum "requirements.txt" }}
                   
-
     build:
       docker:
             - image: circleci/buildpack-deps:stretch
@@ -71,16 +89,28 @@ jobs:
         - checkout
         - setup_remote_docker
         - run:
+            name: Get latest label version
+            command: |
+              echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+              RESULT=$(./get_latest_tag.sh)
+              LEN=${#RESULT}
+              CURRENT_LABEL=${RESULT:1:${LEN}}
+              LABEL_VERSION=$(${CURRENT_LABEL} + 0.01 | bc -l)
+              cat ${LABEL_VERSION} > label_version.txt
+        - run:
             name: Build Docker image with latest tag
             command: |
-              docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+              docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${LABEL_VERSION} .
         - run:
             name: Archive Docker image
-            command: docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}
+            command: |
+              LABEL_VERSION=$(cat ./label_version.txt)
+              docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${LABEL_VERSION}
         - persist_to_workspace:
             root: .
             paths:
               - ./image.tar
+              - ./label_version.txt
   
     push:
       docker:
@@ -91,17 +121,26 @@ jobs:
         - setup_remote_docker
         - run:
             name: Load archived Docker image
-            command: docker load -i /tmp/workspace/image.tar
+            command: |
+              docker load -i /tmp/workspace/image.tar
         - run: 
             name: Push to dockerhub
             command: |
+              LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
               echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${LABEL_VERSION}
 
     create_deployment:
         docker:
           - image: cimg/python:3.10.6
         steps:
+          - attach_workspace:
+                at: /tmp/workspace
+          - run:
+              name: Export label version
+              command: |
+                LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
+                export LABEL_VERSION
           - checkout
           - run:
               name: Set up .aws directory
@@ -123,12 +162,21 @@ jobs:
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-deployment.yml
-                  resource-name: deployment/house-pred-deployment-${CIRCLE_WORKFLOW_ID}
+                  resource-name: deployment/house-pred-deployment-${LABEL_VERSION}
+          - rollback_on_fail:
+                  script_type: "deployment"
 
     create_service:
         docker:
           - image: cimg/python:3.10.6
         steps:
+          - attach_workspace:
+                at: /tmp/workspace
+          - run:
+              name: Export label version
+              command: |
+                LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
+                export LABEL_VERSION
           - checkout
           - run:
               name: Set up .aws directory
@@ -146,32 +194,56 @@ jobs:
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-service.yml
-                  resource-name: service/house-pred-api-service-${CIRCLE_WORKFLOW_ID} 
+                  resource-name: service/house-pred-api-service-${LABEL_VERSION}
+          - run:
+              name: Get hostname of Load Balancer
+              command: |
+                kubectl get services -n ${KUBE_NAMESPACE}
+          - rollback_on_fail:
+                  script_type: "service" 
+
+    smoke_test:
+        docker:
+          - image: cimg/python:3.10.6
+        steps:
+          - attach_workspace:
+                at: /tmp/workspace
+          - run:
+              name: Run smoke test against Service Endpoint
+              command: |
+                DNS_SERVICE_NAME=$(cat dns_host_name.txt)
+                ./make_prediction.sh 80 ${DNS_SERVICE_NAME}
+                RC=$(echo $?)
+                if [ "${RC}" != "0" ];
+                then
+                    exit 1
+                fi
+
+    #repoint:
 
 workflows:
       version: 2
       main_workflow:
             jobs:
-              - create_deployment
-
-              #- create_service:
-              #      requires:
-              #          - create_deployment
-              #- lint 
-              #- test
-              #- build:
-              #    requires:
-              #      - lint
-              #      - test
-              #- push:
+              # - create_deployment
+              # - create_service:
+              #       requires:
+              #           - create_deployment
+              - lint
+              - test
+              - build:
+                 requires:
+                   - lint
+                   - test
+              # - push:
               #    requires:
               #      - build
               #    filters:
               #      branches:
               #        only: master
-              #- create_deployment:
+              # - create_deployment:
               #      requires:
               #        - push
-              #- create_service:
+              # - create_service:
               #      requires:
               #        - create_deployment
