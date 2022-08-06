@@ -135,7 +135,7 @@ jobs:
             command: |
               LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
               echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${LABEL_VERSION}
+              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION}
 
     create_deployment:
         docker:
@@ -169,7 +169,7 @@ jobs:
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-deployment.yml
-                  resource-name: deployment/house-pred-deployment-${LABEL_VERSION}
+                  resource-name: deployment/house-pred-deployment-v${LABEL_VERSION}
           - rollback_on_fail:
                   script_type: "deployment"
 
@@ -201,7 +201,7 @@ jobs:
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-service.yml
-                  resource-name: service/house-pred-api-service-${LABEL_VERSION}
+                  resource-name: service/house-pred-api-service-v${LABEL_VERSION}
           - run:
               name: Get hostname of Load Balancer
               command: |
@@ -242,12 +242,12 @@ workflows:
                  requires:
                    - lint
                    - test
-              # - push:
-              #    requires:
-              #      - build
-              #    filters:
-              #      branches:
-              #        only: master
+              - push:
+                 requires:
+                   - build
+                 filters:
+                   branches:
+                     only: master
               # - create_deployment:
               #      requires:
               #        - push
