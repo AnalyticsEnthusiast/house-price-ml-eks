@@ -5,12 +5,14 @@ commands:
         parameters:
           script_type:
             type: string
+          label_version:
+            type: string
         steps:
           - run:
               name: Rollback kubernetes deployment/service on failure
               command: |
                 echo "Rolling back " << parameters.script_type >>
-                RESULT=$(kubectl get deployments | grep "house-pred-deployment-${CIRCLE_WORKFLOW_ID}")
+                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-"<<parameters.label_version>>)
                 if [ "${RESULT}" = "0" ];
                 then
                     envsubst < ml-<<parameters.script_type>>.yml | kubectl delete -f -
