@@ -101,7 +101,7 @@ jobs:
               RESULT=$(./get_latest_tag.sh)
               LEN=${#RESULT}
               CURRENT_LABEL=${RESULT:1:${LEN}}
-              LABEL_VERSION=$(${CURRENT_LABEL} + 0.01 | bc -l)
+              LABEL_VERSION=$(echo ${CURRENT_LABEL} + 0.01 | bc -l)
               cat ${LABEL_VERSION} > label_version.txt
         - run:
             name: Build Docker image with latest tag
