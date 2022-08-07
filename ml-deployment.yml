@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: house-pred-deployment-v${LABEL_VERSION}
+  name: house-pred-deployment-${LABEL_VERSION}
   namespace: house-prediction-namespace
   labels:
     app: house-prediction-api
@@ -10,15 +10,17 @@ spec:
   selector:
     matchLabels:
       app: house-prediction-api
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
+      version: ${LABEL_VERSION}
+  # strategy:
+  #   rollingUpdate:
+  #     maxSurge: 25%
+  #     maxUnavailable: 25%
+  #   type: RollingUpdate
   template:
     metadata:
       labels:
         app: house-prediction-api
+        version: ${LABEL_VERSION}
     spec:
       containers:
       - image: theanalyst6/house-prediction-ml:latest

@@ -11,8 +11,9 @@ commands:
           - run:
               name: Rollback kubernetes deployment/service on failure
               command: |
-                echo "Rolling back " << parameters.script_type >>
-                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-v"<<parameters.label_version>>)
+                echo "Rolling back "<< parameters.script_type >>
+                echo "${LABEL_VERSION}"
+                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-${LABEL_VERSION})
                 if [ "${RESULT}" = "0" ];
                 then
                     envsubst < ml-<<parameters.script_type>>.yml | kubectl delete -f -
@@ -135,6 +136,7 @@ jobs:
               LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
               echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
               echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
               docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION/-/.}
 
     create_deployment:
@@ -165,7 +167,7 @@ jobs:
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-deployment.yml
-                  resource-name: deployment/house-pred-deployment-v${LABEL_VERSION}
+                  resource-name: deployment/house-pred-deployment-${LABEL_VERSION}
           - rollback_on_fail:
                   script_type: "deployment"
                   label_version: ${LABEL_VERSION}
@@ -181,6 +183,7 @@ jobs:
               command: |
                 LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
                 echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
+                echo "export GREEN="-green" >> $BASH_ENV
           - checkout
           - run:
               name: Set up .aws directory
@@ -195,16 +198,16 @@ jobs:
           - kubernetes/create-or-update-resource:
                   action-type: apply
                   envsubst: true
-                  get-rollout-status: true
+                  get-rollout-status: false
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: ml-service.yml
-                  resource-name: service/house-pred-api-service-v${LABEL_VERSION}
+                  resource-name: service/house-pred-api-service${GREEN}
           - run:
               name: Get hostname of New Load Balancer
               command: |
                 sleep(10) # Wait for service to come online
-                PREV_VERSION=$(echo ${LABEL_VERSION/-/.} - 0.01 | bc -l)
-                kubectl get services -n ${KUBE_NAMESPACE} | grep "v${PREV_VERSION/./-}" | awk '{ print $4}' > dns_host_name.txt
+                #PREV_VERSION=$(echo ${LABEL_VERSION/-/.} - 0.01 | bc -l)
+                kubectl get services -n ${KUBE_NAMESPACE} | grep "${LABEL_VERSION}" | awk '{ print $4}' > dns_host_name.txt
           - persist_to_workspace:
                 root: .
                 paths:
@@ -234,7 +237,35 @@ jobs:
           - rollback_on_fail:
                   script_type: "deployment" 
 
-    #repoint: TODO
+    repoint:
+        docker:
+          - image: cimg/python:3.10.6
+        steps:
+          - attach_workspace:
+                at: /tmp/workspace
+          - run:
+                name: Export label version
+                command: |
+                  LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
+                  echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
+                  echo "export GREEN="" >> $BASH_ENV
+          - run:
+              name: Set up .aws directory
+              command: |
+                  mkdir ~/.aws
+                  echo -e "[UdacityAdmin]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+          - aws-eks/update-kubeconfig-with-authenticator:
+                  cluster-name: ${CLUSTER_NAME}
+                  install-kubectl: true
+                  aws-region: ${AWS_DEFAULT_REGION}
+                  aws-profile: UdacityAdmin
+          - kubernetes/create-or-update-resource:
+                  action-type: apply
+                  envsubst: true
+                  get-rollout-status: false
+                  namespace: ${KUBE_NAMESPACE}
+                  resource-file-path: ml-service.yml
+                  resource-name: service/house-pred-api-service
 
 workflows:
       version: 2
@@ -258,3 +289,13 @@ workflows:
               - create_service:
                    requires:
                      - create_deployment
+              # - smoke_test:
+              #       requires:
+              #         - create_service
+              # - repoint:
+              #      requires:
+              #         - smoke_test
+              # - delete_prev_version:
+              #       requires:
+              #         - repoint
+
