@@ -12,7 +12,7 @@ commands:
                 echo "Rolling back deployment and service"
                 echo "${LABEL_VERSION}"
                 export GREEN="-green"
-                
+
                 RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-${LABEL_VERSION}")
                 if [ "${RESULT}" = "0" ];
                 then
@@ -182,7 +182,6 @@ jobs:
                   resource-file-path: ml-deployment.yml
                   resource-name: deployment/house-pred-deployment-${LABEL_VERSION}
           - rollback_on_fail:
-                  script_type: "deployment"
                   label_version: ${LABEL_VERSION}
 
     create_service:
@@ -226,7 +225,6 @@ jobs:
                 paths:
                   - ./dns_host_name.txt
           - rollback_on_fail:
-                  script_type: "service"
                   label_version: ${LABEL_VERSION}
 
     smoke_test:
@@ -246,9 +244,7 @@ jobs:
                     exit 1
                 fi
           - rollback_on_fail:
-                  script_type: "service"
-          - rollback_on_fail:
-                  script_type: "deployment" 
+                  label_version: ${LABEL_VERSION}
 
     repoint:
         docker:
