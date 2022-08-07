@@ -102,17 +102,15 @@ jobs:
               LEN=${#RESULT}
               CURRENT_LABEL=${RESULT:1:${LEN}}
               LABEL_VERSION=$(echo ${CURRENT_LABEL} + 0.01 | bc -l)
-              echo ${LABEL_VERSION} > label_version.txt
+              echo ${LABEL_VERSION/./_} > label_version.txt
               echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
         - run:
             name: Build Docker image with latest tag
             command: |
-              #LABEL_VERSION=$(cat ./label_version.txt)
               docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION} .
         - run:
             name: Archive Docker image
             command: |
-              #LABEL_VERSION=$(cat ./label_version.txt)
               docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION}
         - persist_to_workspace:
             root: .
@@ -182,7 +180,7 @@ jobs:
               name: Export label version
               command: |
                 LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
-                export LABEL_VERSION
+                echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
           - checkout
           - run:
               name: Set up .aws directory
