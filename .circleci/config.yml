@@ -12,7 +12,7 @@ commands:
               name: Rollback kubernetes deployment/service on failure
               command: |
                 echo "Rolling back " << parameters.script_type >>
-                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-"<<parameters.label_version>>)
+                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-v"<<parameters.label_version>>)
                 if [ "${RESULT}" = "0" ];
                 then
                     envsubst < ml-<<parameters.script_type>>.yml | kubectl delete -f -
@@ -203,14 +203,15 @@ jobs:
               name: Get hostname of New Load Balancer
               command: |
                 sleep(10) # Wait for service to come online
-                PREV_VERSION=$(echo $LABEL_VERSION - 0.01 | bc -l)
-                kubectl get services -n ${KUBE_NAMESPACE} | grep "v${PREV_VERSION}" | awk '{ print $4}' > dns_host_name.txt
+                PREV_VERSION=$(echo ${LABEL_VERSION/-/.} - 0.01 | bc -l)
+                kubectl get services -n ${KUBE_NAMESPACE} | grep "v${PREV_VERSION/./-}" | awk '{ print $4}' > dns_host_name.txt
           - persist_to_workspace:
                 root: .
                 paths:
                   - ./dns_host_name.txt
           - rollback_on_fail:
-                  script_type: "service" 
+                  script_type: "service"
+                  label_version: ${LABEL_VERSION}
 
     smoke_test:
         docker:
@@ -239,25 +240,25 @@ workflows:
       version: 2
       main_workflow:
             jobs:
-              - build
-              - create_deployment:
-                    requires:
-                        - build
-              # - lint
-              # - test
-              # - build:
-              #    requires:
-              #      - lint
-              #      - test
-              # - push:
-              #    requires:
-              #      - build
-              #    filters:
-              #      branches:
-              #        only: master
+              # - build
               # - create_deployment:
-              #      requires:
-              #        - push
-              # - create_service:
-              #      requires:
-              #        - create_deployment
+              #       requires:
+              #           - build
+              - lint
+              - test
+              - build:
+                 requires:
+                   - lint
+                   - test
+              - push:
+                 requires:
+                   - build
+                 filters:
+                   branches:
+                     only: master
+              - create_deployment:
+                   requires:
+                     - push
+              - create_service:
+                   requires:
+                     - create_deployment
