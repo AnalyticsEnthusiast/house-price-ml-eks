@@ -3,23 +3,32 @@ version: 2.1
 commands:
     rollback_on_fail:
         parameters:
-          script_type:
-            type: string
           label_version:
             type: string
         steps:
           - run:
               name: Rollback kubernetes deployment/service on failure
               command: |
-                echo "Rolling back "<< parameters.script_type >>
+                echo "Rolling back deployment and service"
                 echo "${LABEL_VERSION}"
-                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-${LABEL_VERSION})
+                export GREEN="-green"
+                
+                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-${LABEL_VERSION}")
                 if [ "${RESULT}" = "0" ];
                 then
-                    envsubst < ml-<<parameters.script_type>>.yml | kubectl delete -f -
+                    envsubst < ml-deployment.yml | kubectl delete -f -
                 else
-                    echo "Deployment not found" && exit 0
+                    echo "Deployment not found"
                 fi
+
+                RESULT=$(kubectl get services -n ${KUBE_NAMESPACE} | grep "house-pred-api-service-green")
+                if [ "${RESULT}" = "0" ];
+                then
+                    envsubst < ml-service.yml | kubectl delete -f -
+                else
+                    echo "Service not found"
+                fi
+                exit 0
               when: on_fail
 
 orbs:
@@ -187,7 +196,7 @@ jobs:
               command: |
                 LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
                 echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
-                echo "export GREEN="-green" >> $BASH_ENV
+                echo "export GREEN=-green" >> $BASH_ENV
           - checkout
           - run:
               name: Set up .aws directory
