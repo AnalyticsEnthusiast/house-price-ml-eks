@@ -240,10 +240,6 @@ workflows:
       version: 2
       main_workflow:
             jobs:
-              # - build
-              # - create_deployment:
-              #       requires:
-              #           - build
               - lint
               - test
               - build:
