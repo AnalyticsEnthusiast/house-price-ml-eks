@@ -159,10 +159,6 @@ jobs:
                   install-kubectl: true
                   aws-region: ${AWS_DEFAULT_REGION}
                   aws-profile: UdacityAdmin
-          - run:
-              name: Test
-              command: |
-                cat ~/.kube/config
           - kubernetes/create-or-update-resource:
                   action-type: apply
                   envsubst: true
@@ -203,9 +199,15 @@ jobs:
                   resource-file-path: ml-service.yml
                   resource-name: service/house-pred-api-service-v${LABEL_VERSION}
           - run:
-              name: Get hostname of Load Balancer
+              name: Get hostname of New Load Balancer
               command: |
-                kubectl get services -n ${KUBE_NAMESPACE}
+                sleep(10) # Wait for service to come online
+                PREV_VERSION=$(echo $LABEL_VERSION - 0.01 | bc -l)
+                kubectl get services -n ${KUBE_NAMESPACE} | grep "v${PREV_VERSION}" | awk '{ print $4}' > dns_host_name.txt
+          - persist_to_workspace:
+                root: .
+                paths:
+                  - ./dns_host_name.txt
           - rollback_on_fail:
                   script_type: "service" 
 
@@ -218,36 +220,40 @@ jobs:
           - run:
               name: Run smoke test against Service Endpoint
               command: |
-                DNS_SERVICE_NAME=$(cat dns_host_name.txt)
+                DNS_SERVICE_NAME=$(cat /tmp/workspace/dns_host_name.txt)
                 ./make_prediction.sh 80 ${DNS_SERVICE_NAME}
                 RC=$(echo $?)
                 if [ "${RC}" != "0" ];
                 then
                     exit 1
                 fi
+          - rollback_on_fail:
+                  script_type: "service"
+          - rollback_on_fail:
+                  script_type: "deployment" 
 
-    #repoint:
+    #repoint: TODO
 
 workflows:
       version: 2
       main_workflow:
             jobs:
-              # - create_deployment
-              # - create_service:
-              #       requires:
-              #           - create_deployment
-              - lint
-              - test
-              - build:
-                 requires:
-                   - lint
-                   - test
-              - push:
-                 requires:
-                   - build
-                 filters:
-                   branches:
-                     only: master
+              - build
+              - create_deployment:
+                    requires:
+                        - build
+              # - lint
+              # - test
+              # - build:
+              #    requires:
+              #      - lint
+              #      - test
+              # - push:
+              #    requires:
+              #      - build
+              #    filters:
+              #      branches:
+              #        only: master
               # - create_deployment:
               #      requires:
               #        - push
