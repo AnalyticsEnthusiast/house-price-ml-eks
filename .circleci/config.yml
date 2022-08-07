@@ -141,7 +141,7 @@ jobs:
               echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
               echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
               docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
-              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION}
+              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION/-/.}
 
     create_deployment:
         docker:
