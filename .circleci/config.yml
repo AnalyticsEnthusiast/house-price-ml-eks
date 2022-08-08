@@ -219,7 +219,7 @@ jobs:
           - run:
               name: Get hostname of New Load Balancer
               command: |
-                sleep(10) # Wait for service to come online
+                sleep 10 # Wait for service to come online
                 #PREV_VERSION=$(echo ${LABEL_VERSION/-/.} - 0.01 | bc -l)
                 kubectl get services -n ${KUBE_NAMESPACE} | grep "green" | awk '{ print $4 }' > dns_host_name.txt
           - persist_to_workspace:
