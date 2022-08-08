@@ -341,15 +341,15 @@ workflows:
                  filters:
                    branches:
                      only: master
-              # - create_deployment:
-              #      requires:
-              #        - push
-              # - create_service:
-              #      requires:
-              #        - create_deployment
-              # - smoke_test:
-              #       requires:
-              #         - create_service
+              - create_deployment:
+                   requires:
+                     - push
+              - create_service:
+                   requires:
+                     - create_deployment
+              - smoke_test:
+                    requires:
+                      - create_service
               # - repoint:
               #      requires:
               #         - smoke_test
