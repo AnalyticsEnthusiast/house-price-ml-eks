@@ -240,10 +240,10 @@ jobs:
               command: |
                 DNS_SERVICE_NAME=$(cat /tmp/workspace/dns_host_name.txt)
                 RETRY_COUNT=5
-                
+
                 while true; 
                 do
-                    if [ "$RETRY_COUNT" -gt "0" ];
+                    if [ $RETRY_COUNT -gt 0 ];
                     then
                         ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
                         RC=$(echo $?)
@@ -254,6 +254,8 @@ jobs:
                         else
                             break
                         fi
+                    else
+                        break
                     fi
                 done
           - rollback_on_fail:
@@ -333,12 +335,12 @@ workflows:
                  requires:
                    - lint
                    - test
-              # - push:
-              #    requires:
-              #      - build
-              #    filters:
-              #      branches:
-              #        only: master
+              - push:
+                 requires:
+                   - build
+                 filters:
+                   branches:
+                     only: master
               # - create_deployment:
               #      requires:
               #        - push
