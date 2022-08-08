@@ -241,6 +241,11 @@ jobs:
               command: |
                 mkdir ~/.aws
                 echo -e "[UdacityAdmin]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+          - aws-eks/update-kubeconfig-with-authenticator:
+                  cluster-name: ${CLUSTER_NAME}
+                  install-kubectl: true
+                  aws-region: ${AWS_DEFAULT_REGION}
+                  aws-profile: UdacityAdmin
           - run:
               name: Run smoke test against Service Endpoint
               command: |
@@ -264,11 +269,6 @@ jobs:
                         break
                     fi
                 done
-          - aws-eks/update-kubeconfig-with-authenticator:
-                  cluster-name: ${CLUSTER_NAME}
-                  install-kubectl: true
-                  aws-region: ${AWS_DEFAULT_REGION}
-                  aws-profile: UdacityAdmin
           - rollback_on_fail:
                   label_version: ${LABEL_VERSION}
 
@@ -354,19 +354,19 @@ workflows:
                  filters:
                    branches:
                      only: master
-              # - create_deployment:
-              #      requires:
-              #        - push
-              # - create_service:
-              #      requires:
-              #        - create_deployment
-              # - smoke_test:
-              #       requires:
-              #         - create_service
-              # - repoint:
-              #      requires:
-              #         - smoke_test
-              # - delete_prev_version:
-              #       requires:
-              #         - repoint
+              - create_deployment:
+                   requires:
+                     - push
+              - create_service:
+                   requires:
+                     - create_deployment
+              - smoke_test:
+                    requires:
+                      - create_service
+              - repoint:
+                   requires:
+                      - smoke_test
+              - delete_prev_version:
+                    requires:
+                      - repoint
 
