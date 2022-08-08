@@ -13,18 +13,20 @@ commands:
                 echo "${LABEL_VERSION}"
                 export GREEN="-green"
 
-                RESULT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-${LABEL_VERSION}")
-                if [ "${RESULT}" = "0" ];
+                kubectl get deployments -n ${KUBE_NAMESPACE} | grep "house-pred-deployment-${LABEL_VERSION}"
+                RC=$(echo $?)
+                if [ "${RC}" = "0" ];
                 then
-                    envsubst < ml-deployment.yml | kubectl delete -f -
+                    envsubst < deployment/ml-deployment.yml | kubectl delete -f -
                 else
                     echo "Deployment not found"
                 fi
 
-                RESULT=$(kubectl get services -n ${KUBE_NAMESPACE} | grep "house-pred-api-service-green")
-                if [ "${RESULT}" = "0" ];
+                kubectl get services -n ${KUBE_NAMESPACE} | grep "house-pred-api-service-green"
+                RC=$(echo $?)
+                if [ "${RC}" = "0" ];
                 then
-                    envsubst < ml-service.yml | kubectl delete -f -
+                    envsubst < deployment/ml-service.yml | kubectl delete -f -
                 else
                     echo "Service not found"
                 fi
@@ -83,7 +85,7 @@ jobs:
                 make install
                 python3 app.py &
                 sleep 5 # Wait for server to start
-                ./make_prediction.sh 80
+                ./testing/make_prediction.sh 80
                 RC=$(echo $?)
                 if [ "${RC}" != "0" ];
                 then
@@ -179,7 +181,7 @@ jobs:
                   envsubst: true
                   get-rollout-status: true
                   namespace: ${KUBE_NAMESPACE}
-                  resource-file-path: ml-deployment.yml
+                  resource-file-path: deployment/ml-deployment.yml
                   resource-name: deployment/house-pred-deployment-${LABEL_VERSION}
           - rollback_on_fail:
                   label_version: ${LABEL_VERSION}
@@ -212,14 +214,14 @@ jobs:
                   envsubst: true
                   get-rollout-status: false
                   namespace: ${KUBE_NAMESPACE}
-                  resource-file-path: ml-service.yml
+                  resource-file-path: deployment/ml-service.yml
                   resource-name: service/house-pred-api-service${GREEN}
           - run:
               name: Get hostname of New Load Balancer
               command: |
                 sleep(10) # Wait for service to come online
                 #PREV_VERSION=$(echo ${LABEL_VERSION/-/.} - 0.01 | bc -l)
-                kubectl get services -n ${KUBE_NAMESPACE} | grep "${LABEL_VERSION}" | awk '{ print $4}' > dns_host_name.txt
+                kubectl get services -n ${KUBE_NAMESPACE} | grep "green" | awk '{ print $4 }' > dns_host_name.txt
           - persist_to_workspace:
                 root: .
                 paths:
@@ -237,12 +239,23 @@ jobs:
               name: Run smoke test against Service Endpoint
               command: |
                 DNS_SERVICE_NAME=$(cat /tmp/workspace/dns_host_name.txt)
-                ./make_prediction.sh 80 ${DNS_SERVICE_NAME}
-                RC=$(echo $?)
-                if [ "${RC}" != "0" ];
-                then
-                    exit 1
-                fi
+                RETRY_COUNT=5
+                
+                while true; 
+                do
+                    if [ "$RETRY_COUNT" -gt "0" ];
+                    then
+                        ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
+                        RC=$(echo $?)
+                        if [ "${RC}" != "0" ];
+                        then
+                            sleep 30
+                            RETRY_COUNT=$((${RETRY_COUNT}-1))
+                        else
+                            break
+                        fi
+                    fi
+                done
           - rollback_on_fail:
                   label_version: ${LABEL_VERSION}
 
@@ -273,8 +286,42 @@ jobs:
                   envsubst: true
                   get-rollout-status: false
                   namespace: ${KUBE_NAMESPACE}
-                  resource-file-path: ml-service.yml
+                  resource-file-path: deployment/ml-service.yml
                   resource-name: service/house-pred-api-service
+
+    delete_prev_version:
+        docker:
+          - image: cimg/python:3.10.6
+        steps:
+          - attach_workspace:
+                at: /tmp/workspace
+          - run:
+                name: Export label version
+                command: |
+                  LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
+                  OLD_DEPLOYMENT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep -v ${LABEL_VERSION} | awk '{ print $1 }' | tail -n1)
+                  echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
+                  echo "export OLD_DEPLOYMENT=${OLD_DEPLOYMENT}" >> $BASH_ENV
+          - run:
+              name: Set up .aws directory
+              command: |
+                  mkdir ~/.aws
+                  echo -e "[UdacityAdmin]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
+          - aws-eks/update-kubeconfig-with-authenticator:
+                  cluster-name: ${CLUSTER_NAME}
+                  install-kubectl: true
+                  aws-region: ${AWS_DEFAULT_REGION}
+                  aws-profile: UdacityAdmin
+          - kubernetes/delete-resource:
+                  namespace: ${KUBE_NAMESPACE}
+                  resource-types: deployments
+                  resource-names: ${OLD_DEPLOYMENT}
+                  wait: true
+          - kubernetes/delete-resource:
+                  namespace: ${KUBE_NAMESPACE}
+                  resource-types: services
+                  resource-names: house-pred-api-service-green
+                  wait: true
 
 workflows:
       version: 2
@@ -286,18 +333,18 @@ workflows:
                  requires:
                    - lint
                    - test
-              - push:
-                 requires:
-                   - build
-                 filters:
-                   branches:
-                     only: master
-              - create_deployment:
-                   requires:
-                     - push
-              - create_service:
-                   requires:
-                     - create_deployment
+              # - push:
+              #    requires:
+              #      - build
+              #    filters:
+              #      branches:
+              #        only: master
+              # - create_deployment:
+              #      requires:
+              #        - push
+              # - create_service:
+              #      requires:
+              #        - create_deployment
               # - smoke_test:
               #       requires:
               #         - create_service
