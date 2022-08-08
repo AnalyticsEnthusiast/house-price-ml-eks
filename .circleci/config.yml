@@ -212,7 +212,9 @@ jobs:
           - kubernetes/create-or-update-resource:
                   action-type: apply
                   envsubst: true
-                  get-rollout-status: false
+                  get-rollout-status: true
+                  watch-rollout-status: true
+                  watch-timeout: 10m
                   namespace: ${KUBE_NAMESPACE}
                   resource-file-path: deployment/ml-service.yml
                   resource-name: service/house-pred-api-service${GREEN}
@@ -237,6 +239,10 @@ jobs:
                 at: /tmp/workspace
           - checkout
           - run:
+              name: Install Dependencies (envsubst)
+              command: |
+                sudo apt install -y gettext
+          - run:
               name: Set up .aws directory
               command: |
                 mkdir ~/.aws
@@ -256,7 +262,7 @@ jobs:
                 do
                     if [ $RETRY_COUNT -gt 0 ];
                     then
-                        ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
+                        ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME} 2>/dev/null
                         RC=$(echo $?)
                         if [ "${RC}" != "0" ];
                         then
@@ -360,13 +366,13 @@ workflows:
               - create_service:
                    requires:
                      - create_deployment
-              - smoke_test:
-                    requires:
-                      - create_service
-              - repoint:
-                   requires:
-                      - smoke_test
-              - delete_prev_version:
-                    requires:
-                      - repoint
+              # - smoke_test:
+              #       requires:
+              #         - create_service
+              # - repoint:
+              #      requires:
+              #         - smoke_test
+              # - delete_prev_version:
+              #       requires:
+              #         - repoint
 
