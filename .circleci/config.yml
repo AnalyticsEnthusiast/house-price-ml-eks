@@ -235,6 +235,12 @@ jobs:
         steps:
           - attach_workspace:
                 at: /tmp/workspace
+          - checkout
+          - run:
+              name: Set up .aws directory
+              command: |
+                mkdir ~/.aws
+                echo -e "[UdacityAdmin]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}\n" > ~/.aws/credentials
           - run:
               name: Run smoke test against Service Endpoint
               command: |
@@ -258,6 +264,11 @@ jobs:
                         break
                     fi
                 done
+          - aws-eks/update-kubeconfig-with-authenticator:
+                  cluster-name: ${CLUSTER_NAME}
+                  install-kubectl: true
+                  aws-region: ${AWS_DEFAULT_REGION}
+                  aws-profile: UdacityAdmin
           - rollback_on_fail:
                   label_version: ${LABEL_VERSION}
 
@@ -267,12 +278,13 @@ jobs:
         steps:
           - attach_workspace:
                 at: /tmp/workspace
+          - checkout
           - run:
                 name: Export label version
                 command: |
                   LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
                   echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
-                  echo "export GREEN="" >> $BASH_ENV
+                  echo "export GREEN= " >> $BASH_ENV
           - run:
               name: Set up .aws directory
               command: |
@@ -297,13 +309,7 @@ jobs:
         steps:
           - attach_workspace:
                 at: /tmp/workspace
-          - run:
-                name: Export label version
-                command: |
-                  LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
-                  OLD_DEPLOYMENT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep -v ${LABEL_VERSION} | awk '{ print $1 }' | tail -n1)
-                  echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
-                  echo "export OLD_DEPLOYMENT=${OLD_DEPLOYMENT}" >> $BASH_ENV
+          - checkout
           - run:
               name: Set up .aws directory
               command: |
@@ -314,6 +320,13 @@ jobs:
                   install-kubectl: true
                   aws-region: ${AWS_DEFAULT_REGION}
                   aws-profile: UdacityAdmin
+          - run:
+                name: Export label version
+                command: |
+                  LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
+                  OLD_DEPLOYMENT=$(kubectl get deployments -n ${KUBE_NAMESPACE} | grep -v ${LABEL_VERSION} | awk '{ print $1 }' | tail -n1)
+                  echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
+                  echo "export OLD_DEPLOYMENT=${OLD_DEPLOYMENT}" >> $BASH_ENV
           - kubernetes/delete-resource:
                   namespace: ${KUBE_NAMESPACE}
                   resource-types: deployments
@@ -341,15 +354,15 @@ workflows:
                  filters:
                    branches:
                      only: master
-              - create_deployment:
-                   requires:
-                     - push
-              - create_service:
-                   requires:
-                     - create_deployment
-              - smoke_test:
-                    requires:
-                      - create_service
+              # - create_deployment:
+              #      requires:
+              #        - push
+              # - create_service:
+              #      requires:
+              #        - create_deployment
+              # - smoke_test:
+              #       requires:
+              #         - create_service
               # - repoint:
               #      requires:
               #         - smoke_test

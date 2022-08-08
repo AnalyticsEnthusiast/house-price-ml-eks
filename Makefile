@@ -28,4 +28,17 @@ lint:
 	# This should be run from inside a virtualenv
 	pylint --disable=R,C,W1203,W1202 app.py
 
+init:
+	# Sets up Elastic Kubernetes Cluster with Namespace and initial Deployment
+	# Should be run locally, step is not part of any automation
+	eksctl create cluster -f cluster_config/eks-cluster.yml --profile UdacityAdmin
+	kubectl apply -f deployment/ml-namespace.yml
+	LABEL_VERSION=$(./get_latest_tag.sh)
+	LABEL_VERSION=${LABEL_VERSION:1:${#LABEL_VERSION}}
+	export GREEN=""
+	export LABEL_VERSION=${LABEL_VERSION/./-}
+	# Deploy initial Deployment and service
+	kubectl apply -f deployment/ml-deployment.yml
+	kubectl apply -f deployment/ml-service.ml
+
 all: install lint test
