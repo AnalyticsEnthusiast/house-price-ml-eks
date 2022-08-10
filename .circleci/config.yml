@@ -120,19 +120,19 @@ jobs:
             name: Build Docker image with latest tag
             command: |
               echo "Building here"
-              #docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION} .
-              #docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+              docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION} .
+              docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
         - run:
             name: Archive Docker image
             command: |
               echo "Archive here"
-              #docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION}
-              #docker save -o image_latest.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+              docker save -o image.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION}
+              docker save -o image_latest.tar ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
         - persist_to_workspace:
             root: .
             paths:
-              #- ./image.tar
-              #- ./image_latest.tar
+              - ./image.tar
+              - ./image_latest.tar
               - ./label_version.txt
   
     push:
@@ -146,16 +146,16 @@ jobs:
             name: Load archived Docker image
             command: |
               echo "Loading here"
-              #docker load -i /tmp/workspace/image.tar
-              #docker load -i /tmp/workspace/image_latest.tar
+              docker load -i /tmp/workspace/image.tar
+              docker load -i /tmp/workspace/image_latest.tar
         - run: 
             name: Push to dockerhub
             command: |
               LABEL_VERSION=$(cat /tmp/workspace/label_version.txt)
               echo "export LABEL_VERSION=${LABEL_VERSION}" >> $BASH_ENV
-              #echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-              #docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
-              #docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION/-/.}
+              echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+              docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:v${LABEL_VERSION/-/.}
 
     create_deployment:
         docker:
@@ -250,38 +250,15 @@ jobs:
                   aws-region: ${AWS_DEFAULT_REGION}
                   aws-profile: UdacityAdmin
           - run:
-              name: Install Dependencies (envsubst)
+              name: Install Dependencies (envsubst) incase rollback
               command: |
                 sudo apt-get update && sudo apt-get install -y gettext
           - run:
               name: Run smoke test against Service Endpoint
               command: |
                 DNS_SERVICE_NAME=$(cat /tmp/workspace/dns_host_name.txt)
-                RETRY_COUNT=5
-
-                #TODO - Check status of load balancer before running make_prediction.sh
-                #LB_NAME=$(echo ${DNS_SERVICE_NAME} | cut -d '.' -f 1 | cut -d '-' -f 1)
-                #aws elbv2 describe-load-balancers --name ${LB_NAME} --profile UdacityAdmin
 
                 sleep 240 && ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
-
-                # while true; 
-                # do
-                #     if [ $RETRY_COUNT -gt 0 ];
-                #     then
-                #         ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
-                #         RC=$(echo $?)
-                #         if [ "${RC}" != "0" ];
-                #         then
-                #             sleep 30
-                #             RETRY_COUNT=$((${RETRY_COUNT}-1))
-                #         else
-                #             break
-                #         fi
-                #     else
-                #         break
-                #     fi
-                # done
           - rollback_on_fail:
                   label_version: ${LABEL_VERSION}
 
