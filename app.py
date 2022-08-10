@@ -10,7 +10,6 @@ app = Flask(__name__)
 LOG = create_logger(app)
 LOG.setLevel(logging.INFO)
 
-put bug here
 def scale(payload):
     """Scales Payload"""
     
