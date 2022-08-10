@@ -253,7 +253,7 @@ jobs:
           - run:
               name: Run smoke test against Service Endpoint
               command: |
-                sleep 180
+                sleep 240
                 DNS_SERVICE_NAME=$(cat /tmp/workspace/dns_host_name.txt)
                 RETRY_COUNT=5
 
@@ -265,7 +265,7 @@ jobs:
                 do
                     if [ $RETRY_COUNT -gt 0 ];
                     then
-                        ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME} 2>/dev/null
+                        ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
                         RC=$(echo $?)
                         if [ "${RC}" != "0" ];
                         then
