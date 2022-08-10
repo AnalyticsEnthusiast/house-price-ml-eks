@@ -237,10 +237,6 @@ jobs:
                 at: /tmp/workspace
           - checkout
           - run:
-              name: Install Dependencies (envsubst)
-              command: |
-                sudo apt install -y gettext
-          - run:
               name: Set up .aws directory
               command: |
                 mkdir ~/.aws
@@ -251,9 +247,12 @@ jobs:
                   aws-region: ${AWS_DEFAULT_REGION}
                   aws-profile: UdacityAdmin
           - run:
+              name: Install Dependencies (envsubst)
+              command: |
+                sudo apt-get update && sudo apt-get install -y gettext
+          - run:
               name: Run smoke test against Service Endpoint
               command: |
-                sleep 240
                 DNS_SERVICE_NAME=$(cat /tmp/workspace/dns_host_name.txt)
                 RETRY_COUNT=5
 
@@ -261,23 +260,25 @@ jobs:
                 #LB_NAME=$(echo ${DNS_SERVICE_NAME} | cut -d '.' -f 1 | cut -d '-' -f 1)
                 #aws elbv2 describe-load-balancers --name ${LB_NAME} --profile UdacityAdmin
 
-                while true; 
-                do
-                    if [ $RETRY_COUNT -gt 0 ];
-                    then
-                        ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
-                        RC=$(echo $?)
-                        if [ "${RC}" != "0" ];
-                        then
-                            sleep 30
-                            RETRY_COUNT=$((${RETRY_COUNT}-1))
-                        else
-                            break
-                        fi
-                    else
-                        break
-                    fi
-                done
+                sleep 240 && ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
+
+                # while true; 
+                # do
+                #     if [ $RETRY_COUNT -gt 0 ];
+                #     then
+                #         ./testing/make_prediction.sh 80 ${DNS_SERVICE_NAME}
+                #         RC=$(echo $?)
+                #         if [ "${RC}" != "0" ];
+                #         then
+                #             sleep 30
+                #             RETRY_COUNT=$((${RETRY_COUNT}-1))
+                #         else
+                #             break
+                #         fi
+                #     else
+                #         break
+                #     fi
+                # done
           - rollback_on_fail:
                   label_version: ${LABEL_VERSION}
 
