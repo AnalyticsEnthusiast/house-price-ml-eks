@@ -34,11 +34,12 @@ init:
 	eksctl create cluster -f cluster_config/eks-cluster.yml --profile UdacityAdmin
 	kubectl apply -f deployment/ml-namespace.yml
 	LABEL_VERSION=$(./get_latest_tag.sh)
-	LABEL_VERSION=${LABEL_VERSION:1:${#LABEL_VERSION}}
+	LEN=${#LABEL_VERSION}
+	LABEL_VERSION=${LABEL_VERSION:1:${LEN}}
 	export GREEN=""
 	export LABEL_VERSION=${LABEL_VERSION/./-}
 	# Deploy initial Deployment and service
-	kubectl apply -f deployment/ml-deployment.yml
-	kubectl apply -f deployment/ml-service.ml
+	envsubst < deployment/ml-deployment.yml | kubectl apply -f -
+	envsubst < deployment/ml-service.ml | kubectl apply -f -
 
 all: install lint test
