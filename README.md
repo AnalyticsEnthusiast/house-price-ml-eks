@@ -40,6 +40,48 @@ The application has been designed to run in a kubernetes environment to take adv
 
 <br>
 
+### Project Setup
+
+<p>To get started with this project an EKS cluster must be created in AWS with an initial deployment. For this project "eksctl" will be used to create the cluster, then "kubectl" will be used to create the application namespace and initial deployment/service. As a prerequisite, you must have an IAM with necessary permissions to create an EKS cluster in AWS. I have created a EKSAdmin profile with the required permissions. Assuming you have cloned this repository, run the following commands.</p>
+
+<br>
+
+Spin up an eks cluster by running eksctl from the root directory. (This command can take about 15min to complete!)
+
+```
+> eksctl create cluster -f cluster_config/eks-cluster.yml --profile EKSAdmin
+```
+<br>
+
+Create the application namespace using kubectl to provide a logical grouping.
+
+```
+> kubectl apply -f deployment/ml-namespace.yml
+```
+
+<br>
+
+Deploy application to EKS (envsubst is used to substitute parameters into config).
+
+```
+> envsubst < deployment/ml-deployment.yml | kubectl apply -f -
+```
+
+<br>
+
+Deploy service to EKS (This will act as the load balancer for the application).
+
+```
+> envsubst < deployment/ml-service.yml | kubectl apply -f -
+```
+
+<br>
+
+The load balancer will generate an endpoint like so "xxxxxxxxxxxxxxxxxxx-891722211.us-east-1.elb.amazonaws.com". Visiting your endpoint over HTTP you should see something like below.
+
+![Working Application](/screenshots/screenshot_blue_deployment.png)
+
+
 
 ### Index
 

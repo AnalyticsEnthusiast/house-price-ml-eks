@@ -91,8 +91,8 @@ managedNodeGroups:
 
 ### Index
 
-1. [Introduction](./README.md)
+1. [Introduction](/README.md)
 
 2. Architecture
 
-3. [CI/CD Pipeline](./docs/circleci.md)
+3. [CI/CD Pipeline](/docs/circleci.md)

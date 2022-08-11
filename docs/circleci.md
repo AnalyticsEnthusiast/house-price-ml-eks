@@ -18,9 +18,9 @@ Full job script is located at ./.circleci/config.yml
 
 ### Index
 
-1. [Introduction](./README.md)
+1. [Introduction](/README.md)
 
-2. [Architecture](./docs/architecture.md)
+2. [Architecture](/docs/architecture.md)
 
 3. CI/CD Pipeline
 
